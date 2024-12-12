@@ -1,29 +1,13 @@
-import sklearn
+import sklearn as sk
 import pandas as pd
 import numpy as np
 
-
 #----------------------Prepairing Data----------------------#
-# Load the Beer_reviews dataset
-beerdir = 'E:/Programmering/TNM108-Projekt/Datasets/beer_reviews.csv'
+# Load the dataset
+beers = pd.read_csv('E:/Programmering/TNM108-Projekt/Datasets/beer_reviews_cleaned.csv')
 
-beers = pd.read_csv(beerdir)
-
-#To lowercase
-beers['beer_style'] = beers['beer_style'].str.lower()
-#Sort beers by overall review, ascending
-beers.sort_values(by='review_overall', ascending=False, inplace=True)
-#Extract the beer categories
-my_beercategories = [beers['beer_style']] 
-# Beer categories without duplicates (104 cars)
-my_beercategories = beers['beer_style'].unique()   
-#Add a new column with the average review scoring
-beers['avg_score'] = beers[['review_aroma', 'review_appearance', 'review_palate',  'review_taste']].mean(axis=1).round(1)
-#Swap places for column beer_style and review_taste
-beers = beers[['brewery_name','review_time', 'review_profilename','review_overall', 'review_aroma', 'review_appearance', 'review_palate',  'review_taste', 'avg_score','beer_style','beer_name', 'beer_abv']]
-#Convert review_time to datetime
-beers['review_time'] = pd.to_datetime(beers['review_time'], unit='s')
-
+# Beer categories without duplicates (104 categories)
+my_beercategories = beers['beer_style'].unique()
 
 #----------------------Functions----------------------#
 #Demand user input Aroma, appearance, palate, and taste
@@ -35,6 +19,7 @@ def collect_userData(aroma, appearance, palate, taste, style):
     appearance_beer = beers.iloc[(beers['review_appearance'] - appearance).abs().argsort()[:1]]
     palate_beer = beers.iloc[(beers['review_palate'] - palate).abs().argsort()[:1]]
     taste_beer = beers.iloc[(beers['review_taste'] - taste).abs().argsort()[:1]]
+
 
     #print("User input: " + style)
     found_style = "No styles found"
@@ -80,12 +65,82 @@ def print_beer(index):
 
 arom,appearance,palate,taste,style = collect_userData(int(input("Enter Aroma (0-5): ")), int(input("Enter Appearance (0-5): ")), int(input("Enter Palate (0-5): ")), int(input("Enter Taste (0-5): ")), str.lower(input("Enter Beer Style: ")))
 
-print(style)
+print(style) #prints all styles with the related term (ex Belgian)
 
-#From lab 4
-# Z is 5 beer styles
+
 '''
-Z = my_beercategories
+collectedBeers = [arom, appearance, palate, taste]
+#Standardize the output
+for i in range(len(collectedBeers)):
+    print(collectedBeers[i].to_string(index=False,  justify='center' ,col_space=10) + "\n")
+
+'''
+#Retrieve closest beer of each style
+
+#----------------------TF-IDF----------------------#
+# Z is 5 beer styles
+
+Z = beers
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+tfidf_vectorizer = TfidfVectorizer()
+tfidf_matrix = tfidf_vectorizer.fit_transform(Z)
+print(tfidf_matrix)
+
+from sklearn.metrics.pairwise import cosine_similarity
+cos_similarity = cosine_similarity(tfidf_matrix[], tfidf_matrix)
+
+#Print the beer style with the highest similarity
+#print_beer_style(cos_similarity)
+
+#-----------------------------------------------From lab 4------------------------------------------------#
+#print(cos_similarity)
+
+d1 = "The sky is blue."
+d2 = "The sun is bright."
+d3 = "The sun in the sky is bright."
+d4 = "We can see the shining sun, the bright sun."
+Z = (d1, d2, d3, d4)
+from sklearn.feature_extraction.text import CountVectorizer
+vectorizer = CountVectorizer()
+#print(vectorizer)
+
+my_stop_words={"the", "is"}
+my_vocabulary={'blue':0, 'sun':1, 'bright':2, 'sky':3}
+vectorizer = CountVectorizer(stop_words=my_stop_words, vocabulary=my_vocabulary)
+
+#print(vectorizer.vocabulary)
+#print(vectorizer.stop_words)
+
+smatrix = vectorizer.transform(Z)
+#print(smatrix)
+
+matrix = smatrix.todense()
+#print(matrix)
+
+from sklearn.feature_extraction.text import TfidfTransformer
+tfidf_transformer = TfidfTransformer(norm="l2")
+tfidf_transformer.fit(smatrix)
+
+# Print idf values
+feature_names = vectorizer.get_feature_names_out()
+import pandas as pd
+df_idf = pd.DataFrame(tfidf_transformer.idf_, index=feature_names, columns=["idf_weights"])
+
+# Sort ascending
+df_idf = df_idf.sort_values(by=["idf_weights"])
+#print(df_idf)
+
+# tf-idf scores
+tf_idf_vector = tfidf_transformer.transform(smatrix)
+
+# get tfidf vector for first document
+first_document_vector = tf_idf_vector[0] # first document "The sky is blue."
+# print the scores
+df = pd.DataFrame(first_document_vector.T.todense(), index=feature_names, columns=["tfidf"])
+df = df.sort_values(by=["tfidf"], ascending=False)
+#print(df)
+
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 tfidf_vectorizer = TfidfVectorizer()
@@ -93,10 +148,5 @@ tfidf_matrix = tfidf_vectorizer.fit_transform(Z)
 #print(tfidf_matrix.shape)
 
 from sklearn.metrics.pairwise import cosine_similarity
-cos_similarity = cosine_similarity(tfidf_matrix[style], tfidf_matrix)
-
-#Print the beer style with the highest similarity
-#print_beer_style(cos_similarity)
-print(cos_similarity)
-
-'''
+cos_similarity = cosine_similarity(tfidf_matrix[0], tfidf_matrix)
+#print(cos_similarity)
