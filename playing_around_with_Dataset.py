@@ -4,7 +4,8 @@ import numpy as np
 
 #----------------------Prepairing Data----------------------#
 # Load the dataset
-beers = pd.read_csv('E:/Programmering/TNM108-Projekt/Datasets/beer_reviews_cleaned.csv')
+beers = pd.read_csv('C:/Users/erika/Documents/GitHub/TNM108-Projekt/Datasets/beer_reviews_cleaned.csv')
+print(beers)
 
 # Beer categories without duplicates (104 categories)
 my_beercategories = beers['beer_style'].unique()
@@ -62,7 +63,7 @@ def print_beer(index):
 #print(len(my_beercategories))
 
 #print_beer(248550)
-'''
+
 arom,appearance,palate,taste,style = collect_userData(np.float64(input("Enter Aroma (0-5): ")), np.float64(input("Enter Appearance (0-5): ")), np.float64(input("Enter Palate (0-5): ")), np.float64(input("Enter Taste (0-5): ")), str.lower(input("Enter Beer Style: ")))
 
 print('All Beer styles found:',style) #prints all styles with the related term (ex Belgian)
@@ -70,12 +71,12 @@ print('All Beer styles found:',style) #prints all styles with the related term (
 
 collectedBeer = [arom, appearance, palate, taste]
 
-
-#Standardize the output
-for i in range(len(collectedBeers)):
-    print(collectedBeers[i].to_string(index=False,  justify='center' ,col_space=10) + "\n")
-
 '''
+#Standardize the output
+for i in range(len(collectedBeer)):
+    print(collectedBeer[i].to_string(index=False,  justify='center' ,col_space=10) + "\n")
+'''
+
 #Retrieve closest beer of each style
 
 #----------------------TF-IDF----------------------#
@@ -133,14 +134,17 @@ def process_in_chunks(sparse_matrix, chunk_size=1000):
 
 # Process and print the shape of each chunk
 for chunk in process_in_chunks(combined_vectors):
-    print(chunk.shape)
+    #print(chunk.shape)
     # Process each chunk as needed
     # For example, you can save each chunk to a file or perform further analysis
 
 # Example: Print the vectorized representation of the first beer (optional)
-first_chunk = next(process_in_chunks(combined_vectors, chunk_size=1))
+    first_chunk = next(process_in_chunks(combined_vectors, chunk_size=1))
+
 print(first_chunk[0])
 input("Press Enter to continue...") #Pause
+
+
 #-----------------------------------------------From lab 4------------------------------------------------#
 
 d1 = (beers.iloc[0])
@@ -150,11 +154,13 @@ d4 = beers.iloc[3]
 
 Z = (d1, d2, d3, d4)
 print(d1)
+
+'''
 #print(Z)
 input("Press Enter to continue...") #Pause
 from sklearn.feature_extraction.text import TfidfVectorizer
 tfidf_vectorizer = TfidfVectorizer()
-tfidf_matrix = tfidf_vectorizer.fit_transform(Z)
+tfidf_matrix = tfidf_vectorizer.fit_transform(Z)z
 print(tfidf_matrix.shape)
 
 input("Press Enter to continue...") #Pause
@@ -215,3 +221,29 @@ print(tfidf_matrix.shape)
 from sklearn.metrics.pairwise import cosine_similarity
 cos_similarity = cosine_similarity(tfidf_matrix[0], tfidf_matrix)
 print(cos_similarity)
+'''
+
+# Test KMeans
+
+# using the elbow method to find the optimal number of clusters
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+X = beers.drop(columns=['brewery_name','review_time',])
+#print(Y)
+X = beers.iloc[:, [3,6]].values
+
+wcss = []
+for i in range(1,11):
+    kmeans = KMeans(n_clusters= i, init = 'k-means++', max_iter = 300, n_init = 10, random_state = 0)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+plt.plot(range(1,11),wcss)
+plt.title("The Elbow Method")
+plt.xlabel("Number of Clusters")
+plt.ylabel("WCSS")
+plt.show()
+
+# Applying k-means to dataset
+kmeans = KMeans(n_clusters = 4, init = 'k-means++', max_iter = 300, n_init = 10, random_state = 0)
+y_kmeans = kmeans.fit_predict(X)
