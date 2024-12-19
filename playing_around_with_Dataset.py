@@ -234,16 +234,36 @@ X = beers.drop(columns=['brewery_name','review_time',])
 X = beers.iloc[:, [3,6]].values
 
 wcss = []
-for i in range(1,11):
+for i in range(1,8):
     kmeans = KMeans(n_clusters= i, init = 'k-means++', max_iter = 300, n_init = 10, random_state = 0)
     kmeans.fit(X)
     wcss.append(kmeans.inertia_)
-plt.plot(range(1,11),wcss)
+plt.plot(range(1,8),wcss)
 plt.title("The Elbow Method")
 plt.xlabel("Number of Clusters")
 plt.ylabel("WCSS")
 plt.show()
 
 # Applying k-means to dataset
-kmeans = KMeans(n_clusters = 4, init = 'k-means++', max_iter = 300, n_init = 10, random_state = 0)
-y_kmeans = kmeans.fit_predict(X)
+'''
+kmeans = KMeans(n_clusters = 5, init = 'k-means++', max_iter = 300, n_init = 10, random_state = 0)
+label = kmeans.fit_predict(X)
+
+print(label)
+
+import matplotlib.pyplot as plt
+ 
+#filter rows of original data
+filtered_label0 = label[label == 0]
+ 
+#plotting the results
+plt.scatter(filtered_label0[:,0] , filtered_label0[:,1])
+plt.show()
+'''
+#Test sentient analysis
+
+import nltk
+from nltk.corpus import stopwords
+
+stops = set(stopwords.words('english'))
+print(stops)
